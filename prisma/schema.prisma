@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Poem {
+  id        String   @id @default(cuid())
+  poemText  String
+  poemType  String   // "haiku" or "tanka"
+  imageData String   // base64-encoded image
+  season    String?
+  mood      String?
+  createdAt DateTime @default(now())
+}

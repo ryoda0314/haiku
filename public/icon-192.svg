@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="24" fill="#f5f0e8"/>
+  <circle cx="138" cy="148" r="18" fill="#c13b2a" opacity="0.25"/>
+  <text x="96" y="112" text-anchor="middle" dominant-baseline="central"
+        font-family="'Noto Serif JP', 'Yu Mincho', serif" font-size="96" font-weight="700"
+        fill="#292524">詠</text>
+  <circle cx="138" cy="148" r="12" fill="none" stroke="#c13b2a" stroke-width="1.5" opacity="0.8"/>
+  <text x="138" y="151" text-anchor="middle" dominant-baseline="central"
+        font-family="'Noto Serif JP', 'Yu Mincho', serif" font-size="11" font-weight="400"
+        fill="#c13b2a" opacity="0.9">詠</text>
+</svg>

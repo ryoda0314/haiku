@@ -1,0 +1,65 @@
+"use client";
+
+import { useRef, useState } from "react";
+
+interface PhotoUploadProps {
+  onSelect: (file: File) => void;
+}
+
+export default function PhotoUpload({ onSelect }: PhotoUploadProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFile = (file: File) => {
+    if (file.type.startsWith("image/")) {
+      onSelect(file);
+    }
+  };
+
+  return (
+    <div
+      className={`flex flex-col items-center gap-3 py-6 px-4 border-2 border-dashed rounded-2xl transition-colors cursor-pointer ${
+        isDragging
+          ? "border-amber-500 bg-amber-50"
+          : "border-stone-300 hover:border-stone-400"
+      }`}
+      onClick={() => inputRef.current?.click()}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDragging(true);
+      }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files[0];
+        if (file) handleFile(file);
+      }}
+    >
+      <svg
+        className="w-10 h-10 text-stone-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
+        />
+      </svg>
+      <span className="text-stone-500 text-sm">写真を選択・ドロップ</span>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+        }}
+      />
+    </div>
+  );
+}
