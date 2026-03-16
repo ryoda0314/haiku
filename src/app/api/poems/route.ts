@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { generatePoem } from "@/lib/claude";
+import { getDb } from "@/lib/db";
 import type { GeneratePoemRequest } from "@/types";
+
+// Vercel serverless function timeout (requires Pro plan for >10s)
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,21 +31,44 @@ export async function POST(request: NextRequest) {
       poemType
     );
 
-    const poem = await prisma.poem.create({
-      data: {
+    // Try to save to DB, but don't fail if DB is unavailable (e.g. Vercel)
+    let poemId: string | null = null;
+    try {
+      const db = getDb();
+      if (db) {
+        const poem = await db.poem.create({
+          data: {
+            poemText: result.poem,
+            poemType,
+            imageData: imageBase64,
+            season: result.season,
+            mood: result.mood,
+          },
+        });
+        poemId = poem.id;
+      }
+    } catch (dbError) {
+      console.warn("DB save skipped:", dbError);
+    }
+
+    return NextResponse.json(
+      {
+        id: poemId,
         poemText: result.poem,
         poemType,
         imageData: imageBase64,
         season: result.season,
         mood: result.mood,
+        createdAt: new Date().toISOString(),
       },
-    });
-
-    return NextResponse.json(poem, { status: 201 });
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Poem generation error:", error);
+    const message =
+      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "詩の生成に失敗しました。もう一度お試しください。" },
+      { error: `詩の生成に失敗しました: ${message}` },
       { status: 500 }
     );
   }
@@ -50,26 +76,28 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const db = getDb();
+    if (!db) {
+      return NextResponse.json({ poems: [], total: 0, page: 1 });
+    }
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const skip = (page - 1) * limit;
 
     const [poems, total] = await Promise.all([
-      prisma.poem.findMany({
+      db.poem.findMany({
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
-      prisma.poem.count(),
+      db.poem.count(),
     ]);
 
     return NextResponse.json({ poems, total, page });
   } catch (error) {
     console.error("Poem list error:", error);
-    return NextResponse.json(
-      { error: "詩の取得に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ poems: [], total: 0, page: 1 });
   }
 }

@@ -48,7 +48,13 @@ export default function Home() {
       }
 
       const poem = await response.json();
-      router.push(`/result/${poem.id}`);
+      if (poem.id) {
+        router.push(`/result/${poem.id}`);
+      } else {
+        // DB unavailable (Vercel) — store in sessionStorage and show inline
+        sessionStorage.setItem("latest_poem", JSON.stringify(poem));
+        router.push("/result/latest");
+      }
     } catch {
       setError("詩の生成に失敗しました。もう一度お試しください。");
       setIsGenerating(false);

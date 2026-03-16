@@ -1,19 +1,27 @@
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/db";
 import PoemCard from "@/components/poem-card";
 import Link from "next/link";
 import type { Poem } from "@/types";
 
 export default async function HistoryPage() {
-  const poemsData = await prisma.poem.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+  let poems: Poem[] = [];
 
-  const poems = poemsData.map((p) => ({
-    ...p,
-    poemType: p.poemType as Poem["poemType"],
-    createdAt: p.createdAt.toISOString(),
-  }));
+  try {
+    const db = getDb();
+    if (db) {
+      const poemsData = await db.poem.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      });
+      poems = poemsData.map((p) => ({
+        ...p,
+        poemType: p.poemType as Poem["poemType"],
+        createdAt: p.createdAt.toISOString(),
+      }));
+    }
+  } catch {
+    // DB unavailable
+  }
 
   return (
     <div className="min-h-screen bg-paper">

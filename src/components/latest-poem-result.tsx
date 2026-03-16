@@ -1,40 +1,40 @@
-import { getDb } from "@/lib/db";
-import { notFound } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import PoemDisplay from "@/components/poem-display";
 import Link from "next/link";
 import type { Poem } from "@/types";
-import LatestPoemResult from "@/components/latest-poem-result";
 
-interface Props {
-  params: Promise<{ id: string }>;
-}
+export default function LatestPoemResult() {
+  const router = useRouter();
+  const [poem, setPoem] = useState<Poem | null>(null);
 
-export default async function ResultPage({ params }: Props) {
-  const { id } = await params;
+  useEffect(() => {
+    const stored = sessionStorage.getItem("latest_poem");
+    if (!stored) {
+      router.replace("/");
+      return;
+    }
+    const data = JSON.parse(stored);
+    setPoem({
+      id: "latest",
+      poemText: data.poemText,
+      poemType: data.poemType,
+      imageData: data.imageData,
+      season: data.season ?? null,
+      mood: data.mood ?? null,
+      createdAt: data.createdAt ?? new Date().toISOString(),
+    });
+  }, [router]);
 
-  // "latest" = sessionStorage fallback (DB unavailable, e.g. Vercel)
-  if (id === "latest") {
-    return <LatestPoemResult />;
+  if (!poem) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-paper">
+        <p className="text-stone-400">読み込み中...</p>
+      </div>
+    );
   }
-
-  const db = getDb();
-  if (!db) {
-    notFound();
-  }
-
-  const poemData = await db.poem.findUnique({
-    where: { id },
-  });
-
-  if (!poemData) {
-    notFound();
-  }
-
-  const poem: Poem = {
-    ...poemData,
-    poemType: poemData.poemType as Poem["poemType"],
-    createdAt: poemData.createdAt.toISOString(),
-  };
 
   return (
     <div className="min-h-screen bg-paper">
@@ -53,12 +53,6 @@ export default async function ResultPage({ params }: Props) {
             className="w-full py-3 rounded-2xl bg-stone-800 text-stone-50 text-center font-serif hover:bg-stone-700 transition-colors"
           >
             もう一首詠む
-          </Link>
-          <Link
-            href="/history"
-            className="w-full py-3 rounded-2xl border border-stone-300 text-stone-600 text-center text-sm hover:bg-stone-50 transition-colors"
-          >
-            歌の記録を見る
           </Link>
         </div>
 
